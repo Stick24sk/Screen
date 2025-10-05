@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>تعليمي — تسجيل شاشة الهاتف (تدريب)</title>
+<style>
+  :root{--bg:#071426;--card:#0b1220;--accent:#0b76ef;--muted:#9aa4b2;}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#e6eef6;background:linear-gradient(180deg,#04121a,#071426);padding:18px}
+  .wrap{max-width:980px;margin:0 auto}
+  .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 6px 20px rgba(2,6,23,0.6);margin-bottom:12px}
+  h1{margin:0 0 8px;font-size:20px}
+  p.lead{margin:0 0 12px;color:var(--muted)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  button{background:var(--accent);color:white;padding:8px 12px;border:0;border-radius:8px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .warns{background:linear-gradient(90deg,#3b0808,#5a1010);padding:10px;border-radius:8px;color:#fff;margin-bottom:12px}
+  .warn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px}
+  .warn-item{background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;font-size:13px}
+  video#playback{width:100%;height:360px;object-fit:contain;background:#000;border-radius:8px}
+  .list{margin-top:12px}
+  .entry{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+  .entry .meta{flex:1}
+  small{color:var(--muted)}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  footer{font-size:12px;color:var(--muted);margin-top:12px}
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.7);z-index:60}
+  .overlay .box{background:#081423;padding:18px;border-radius:10px;max-width:720px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>تجريبي — تسجيل شاشة الجهاز (تعليمي)</h1>
+    <p class="lead">الصفحة تسمح لك بتسجيل شاشة الجهاز. عند الخروج أو تصغير الصفحة التسجيل يتوقف ويحفظ داخل المتصفح لتشغيله لاحقاً.</p>
+
+    <div class="warns">
+      <strong>تحذيرات وتعليمات (اقرأ قبل البدء):</strong>
+      <div class="warn-grid">
+        <div class="warn-item">1) هذا مشروع تعليمي فقط.</div>
+        <div class="warn-item">2) لا تسجل الأشخاص دون علمهم وموافقتهم.</div>
+        <div class="warn-item">3) التسجيل يبقى محلياً داخل متصفحك (IndexedDB).</div>
+        <div class="warn-item">4) لا يتم رفع الملف لأي سيرفر تلقائياً.</div>
+        <div class="warn-item">5) قد لا تدعم كل متصفحات الهواتف تسجيل الشاشة.</div>
+        <div class="warn-item">6) تشغيل التسجيل يتطلب إذن منك لكل جلسة.</div>
+        <div class="warn-item">7) سيتم إيقاف التسجيل عند الخروج/تصغير الصفحة وحفظه.</div>
+        <div class="warn-item">8) حذف بيانات المتصفح يحذف التسجيلات المخزنة.</div>
+        <div class="warn-item">9) لا تستخدم لتسجيل معلومات حساسة للآخرين.</div>
+        <div class="warn-item">10) احرص على وجود مساحة تخزين كافية على الجهاز.</div>
+        <div class="warn-item">11) قد تظهر نافذة نظام لطلب مشاركة الشاشة — اختر الشاشة/التطبيق المناسب.</div>
+        <div class="warn-item">12) إذا فشل التسجيل، تحقق من صلاحيات المتصفح والإعدادات.</div>
+      </div>
+    </div>
+
+    <div>
+      <div><strong>حالة التسجيل:</strong> <span id="status" style="color:#ffd2d2">لم يبدأ</span></div>
+      <div class="controls">
+        <button id="startBtn">ابدأ تسجيل الشاشة</button>
+        <button id="stopBtn" class="ghost" disabled>أوقف التسجيل واحفظ</button>
+        <button id="clearBtn" class="ghost">حذف كل التسجيلات</button>
+      </div>
+      <div class="note">ملاحظة: عند الضغط على "ابدأ" سيطلب المتصفح اختيار الشاشة/التطبيق/تبويب لمشاركته. اضغط سماح لتبدأ.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>مشاهدة التسجيل المباشر / المعاينة</strong>
+    <video id="playback" controls autoplay muted></video>
+    <div class="note" id="sizeNote"></div>
+  </div>
+
+  <div class="card">
+    <strong>سجل التسجيلات المحفوظة (محلي)</strong>
+    <div id="recordingsList" class="list"></div>
+  </div>
+
+  <footer>تعليمي — لا تستخدم لأغراض مضرة. الملفات تبقى في هذا المتصفح فقط حتى تحذفها.</footer>
+</div>
+
+<!-- Overlay موافقة -->
+<div id="consentOverlay" class="overlay" aria-hidden="false">
+  <div class="box">
+    <h3>موافقة قبل تسجيل الشاشة</h3>
+    <p>سوف يُطلب إذن مشاركة الشاشة من متصفحك. التسجيل سيحفظ محلياً فقط. اضغط "أوافق وابدأ" للموافقة.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="agreeBtn">أوافق وابدأ</button>
+      <button id="declineBtn" class="ghost">لا — اغلق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Screen recorder demo (single-file)
+  - يسجل شاشة باستخدام getDisplayMedia
+  - يجمع البيانات عبر MediaRecorder
+  - عند الإخفاء/الخروج يتوقف التسجيل ويخزن الفيديو في IndexedDB
+  - يعرض قائمة فيديوهات محفوظة ويتيح التشغيل/التحميل/الحذف
+*/
+
+// ---------- IndexedDB بسيطة لحفظ blobs ----------
+const DB_NAME = 'screen-recordings-db';
+const STORE_NAME = 'videos';
+function openDb(){ 
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open(DB_NAME, 1);
+    rq.onupgradeneeded = () => {
+      const db = rq.result;
+      if(!db.objectStoreNames.contains(STORE_NAME)){
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function saveBlob(blob, meta = {}) {
+  const db = await openDb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const item = { blob, name: meta.name || ('rec-' + new Date().toISOString()), date: new Date().toISOString(), size: blob.size };
+    const rq = store.add(item);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function listAll() {
+  const db = await openDb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const out = [];
+    const cur = store.openCursor();
+    cur.onsuccess = e => {
+      const cursor = e.target.result;
+      if(cursor){ out.push(Object.assign({id: cursor.key}, cursor.value)); cursor.continue(); }
+      else res(out);
+    };
+    cur.onerror = () => rej(cur.error);
+  });
+}
+async function getById(id) {
+  const db = await openDb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME,'readonly');
+    const rq = tx.objectStore(STORE_NAME).get(Number(id));
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function deleteById(id) {
+  const db = await openDb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME,'readwrite');
+    const rq = tx.objectStore(STORE_NAME).delete(Number(id));
+    rq.onsuccess = () => res();
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function clearAll() {
+  const db = await openDb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME,'readwrite');
+    const rq = tx.objectStore(STORE_NAME).clear();
+    rq.onsuccess = () => res();
+    rq.onerror = () => rej(rq.error);
+  });
+}
+
+// ---------- عناصر DOM ----------
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusSpan = document.getElementById('status');
+const playback = document.getElementById('playback');
+const recordingsList = document.getElementById('recordingsList');
+const sizeNote = document.getElementById('sizeNote');
+const consentOverlay = document.getElementById('consentOverlay');
+const agreeBtn = document.getElementById('agreeBtn');
+const declineBtn = document.getElementById('declineBtn');
+
+let mediaStream = null;
+let recorder = null;
+let chunks = [];
+let isRecording = false;
+
+// ---------- وظائف التسجيل ----------
+async function startRecording() {
+  // التأكد من دعم API
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
+    alert('متصفحك لا يدعم تسجيل الشاشة عبر getDisplayMedia. جرّب متصفح أحدث أو سطح مكتب.');
+    return;
+  }
+  try {
+    statusSpan.textContent = 'يطلب إذن مشاركة الشاشة...';
+    mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    // بعض أنظمة التشغيل ترمي trackended عندما توقف المشاركة يدوياً
+    mediaStream.getVideoTracks().forEach(t => t.addEventListener('ended', () => {
+      // المستخدم أنهى مشاركة الشاشة من واجهة النظام
+      if(isRecording) stopRecording();
+    }));
+    // MediaRecorder
+    recorder = new MediaRecorder(mediaStream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm' });
+    chunks = [];
+    recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstart = () => { isRecording = true; statusSpan.textContent = 'قيد التسجيل'; startBtn.disabled = true; stopBtn.disabled = false; };
+    recorder.onstop = async () => {
+      isRecording = false;
+      statusSpan.textContent = 'أوقف التسجيل — يجري حفظه...';
+      // اجمع البلووب واحفظه
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      try {
+        await saveBlob(blob, { name: 'rec-' + new Date().toISOString() });
+        statusSpan.textContent = 'تم حفظ التسجيل محلياً';
+        await refreshList();
+      } catch (err) {
+        console.error('خطأ حفظ:', err);
+        statusSpan.textContent = 'خطأ في الحفظ';
+      }
+      // افصل الستريم
+      if(mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+    recorder.start(1000); // قطعة كل ثانية
+    // عرض المعاينة (صوت/فيديو) مؤقتاً عبر عنصر الفيديو
+    playback.srcObject = mediaStream;
+    playback.muted = true;
+    playback.play().catch(()=>{});
+    statusSpan.textContent = 'قيد التسجيل';
+  } catch (err) {
+    console.error('خطأ بدء التسجيل:', err);
+    statusSpan.textContent = 'فشل بدء التسجيل أو رفض الإذن';
+  }
+}
+
+function stopRecording() {
+  if(recorder && recorder.state !== 'inactive') {
+    recorder.stop();
+  } else {
+    statusSpan.textContent = 'لا يوجد تسجيل نشط';
+  }
+}
+
+// ---------- استجابة لترك الصفحة / الخفاء ----------
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden' && isRecording) {
+    // عند تصغير التبويب - أوقف التسجيل واحفظ
+    stopRecording();
+  }
+});
+// pagehide يحدث عند الانتقال لصفحة أخرى أو إغلاق التاب
+window.addEventListener('pagehide', () => {
+  if(isRecording) stopRecording();
+});
+// في حال قبل الإغلاق حاول إيقاف التسجيل
+window.addEventListener('beforeunload', (e) => {
+  if(isRecording){
+    stopRecording();
+    // لا نمنع الإغلاق، لكن نوضح للمستخدم أن التسجيل سيتوقف
+    // (لا نعرض رسالة مخصصة لأن المتصفحات الحديثة لا تسمح بها)
+  }
+});
+
+// ---------- واجهة القوائم ----------
+async function refreshList(){
+  recordingsList.innerHTML = '';
+  const items = await listAll();
+  if(!items.length){
+    recordingsList.innerHTML = '<div class="note">لا يوجد تسجيلات محفوظة بعد.</div>';
+    playback.src = '';
+    sizeNote.textContent = '';
+    return;
+  }
+  // عكس لعرض الأحدث أولاً
+  items.sort((a,b)=> (a.date < b.date ? 1 : -1));
+  for(const it of items){
+    const row = document.createElement('div');
+    row.className = 'entry';
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<strong>${it.name}</strong><div><small>${new Date(it.date).toLocaleString()}</small> • <small>${Math.round(it.size/1024)} KB</small></div>`;
+    const playBtn = document.createElement('button'); playBtn.textContent = 'تشغيل';
+    const dlBtn = document.createElement('button'); dlBtn.textContent = 'تحميل'; dlBtn.className='ghost';
+    const delBtn = document.createElement('button'); delBtn.textContent = 'حذف'; delBtn.className='ghost';
+    row.appendChild(meta);
+    row.appendChild(playBtn);
+    row.appendChild(dlBtn);
+    row.appendChild(delBtn);
+    recordingsList.appendChild(row);
+
+    playBtn.addEventListener('click', async () => {
+      const rec = await getById(it.id);
+      if(rec && rec.blob){
+        const url = URL.createObjectURL(rec.blob);
+        playback.srcObject = null;
+        playback.src = url;
+        playback.muted = false;
+        playback.play().catch(()=>{});
+        sizeNote.textContent = `الحجم: ${Math.round(rec.size/1024)} KB — تم التشغيل من النسخة المحفوظة`;
+      }
+    });
+    dlBtn.addEventListener('click', async () => {
+      const rec = await getById(it.id);
+      if(rec && rec.blob){
+        const url = URL.createObjectURL(rec.blob);
+        const a = document.createElement('a'); a.href = url; a.download = (rec.name || 'recording') + '.webm';
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+    });
+    delBtn.addEventListener('click', async () => {
+      if(confirm('هل تريد حذف هذا التسجيل؟')) {
+        await deleteById(it.id);
+        await refreshList();
+      }
+    });
+  }
+}
+
+// ---------- أزرار وحدث الموافقة ----------
+agreeBtn.addEventListener('click', () => {
+  consentOverlay.style.display = 'none';
+  // اترك زر بدء ظاهر ليضغطه المستخدم فعليًا (تفاعل)
+  // لكن سنفعل startRecording مباشرة لأن الضغط على "أوافق" هو تفاعل
+  startRecording();
+});
+declineBtn.addEventListener('click', () => {
+  consentOverlay.style.display = 'none';
+  statusSpan.textContent = 'رفض المستخدم الموافقة';
+});
+
+startBtn.addEventListener('click', () => startRecording());
+stopBtn.addEventListener('click', () => stopRecording());
+clearBtn.addEventListener('click', async () => {
+  if(confirm('حذف كل التسجيلات من التخزين المحلي؟')) {
+    await clearAll();
+    await refreshList();
+  }
+});
+
+// عند تحميل الصفحة جلب القائمة
+window.addEventListener('load', async () => {
+  await refreshList();
+});
+
+// تنظيف أي stream عند المغادرة
+window.addEventListener('unload', () => {
+  try { if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop()); }
+  catch(e){}
+});
+</script>
+</body>
+</html>
